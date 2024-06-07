@@ -1,0 +1,8 @@
+#+TITLE: Doom Emacs Packages
+#+PROPERTY: header-args :tangle packages.el
+
+* MELPA Packages
+
+#+BEGIN_SRC elisp
+(package! org-modern)
+#+END_SRC

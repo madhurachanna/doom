@@ -1,0 +1,212 @@
+#+TITLE: Doom Emacs Configuration
+#+PROPERTY: header-args :tangle config.el
+
+
+* Table of content :toc:
+- [[#user-information][User Information]]
+- [[#font-settings][Font Settings]]
+- [[#theme][Theme]]
+- [[#line-numbers][Line Numbers]]
+- [[#org-directory][Org Directory]]
+- [[#keybindings-for-navigation][Keybindings for Navigation]]
+- [[#exit-insert-mode-by-pressing-j-and-then-j-quickly][Exit insert mode by pressing j and then j quickly]]
+- [[#buffer-navigation][Buffer Navigation]]
+- [[#toggle-term][Toggle Term]]
+- [[#custom-zen-mode][Custom Zen Mode]]
+- [[#company-mode][Company Mode]]
+- [[#lsp-settings-for-python][LSP settings for Python]]
+- [[#scrolling-settings][Scrolling Settings]]
+- [[#neotree][Neotree]]
+- [[#projectile][Projectile]]
+- [[#org-bullets][Org Bullets]]
+- [[#table-of-contents][Table of Contents]]
+- [[#org-modern-mode][Org Modern Mode]]
+- [[#fill-column-indicator][Fill Column Indicator]]
+
+* User Information
+  # (setq user-full-name "John Doe"
+  #       user-mail-address "john@doe.com")
+
+* Font Settings
+  #+BEGIN_SRC elisp
+  (setq doom-font (font-spec :family "SauceCodePro Nerd Font Mono" :size 20))
+  ;; (setq doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
+  #+END_SRC
+
+* Theme
+  #+BEGIN_SRC elisp
+  (setq doom-theme 'doom-gruvbox)
+  #+END_SRC
+
+* Line Numbers
+  #+BEGIN_SRC elisp
+  (setq display-line-numbers-type t)
+  #+END_SRC
+
+* Org Directory
+  #+BEGIN_SRC elisp
+  (setq org-directory "~/org/")
+  #+END_SRC
+
+* Keybindings for Navigation
+  #+BEGIN_SRC elisp
+  (map! :nv "J" (lambda () (interactive) (evil-next-visual-line 5)))
+  (map! :nv "K" (lambda () (interactive) (evil-previous-visual-line 5)))
+  (map! :nv "H" (lambda () (interactive) (evil-backward-char 5)))
+  (map! :nv "L" (lambda () (interactive) (evil-forward-char 5)))
+  #+END_SRC
+
+* Exit insert mode by pressing j and then j quickly
+  #+BEGIN_SRC elisp
+  (use-package! evil-escape
+    :init
+    (setq evil-escape-key-sequence "jj"))
+  #+END_SRC
+
+* Buffer Navigation
+  #+BEGIN_SRC elisp
+  (map! :nmv "<tab>" #'centaur-tabs-forward)
+  (map! :nmv "<S-tab>" #'centaur-tabs-backward)
+  #+END_SRC
+
+* Toggle Term
+  #+BEGIN_SRC elisp
+  (map! :leader
+        (:prefix ("t" . "toggle")
+         :desc "Toggle vterm" "t" #'+vterm/toggle))
+  #+END_SRC
+
+* Custom Zen Mode
+  #+BEGIN_SRC elisp
+  (defun my-zen-mode-toggle ()
+    "Toggle custom Zen Mode to center text without increasing font size."
+    (interactive)
+    (if (bound-and-true-p visual-fill-column-mode)
+        (my-zen-mode-exit)
+      (my-zen-mode)))
+
+  (defun my-zen-mode ()
+    "Activate custom Zen Mode."
+    (visual-line-mode 1)
+    (visual-fill-column-mode 1)
+    (setq-local visual-fill-column-center-text t)
+    (setq-local visual-fill-column-width 90)
+    (let* ((margin (max 0 (/ (- (window-total-width) visual-fill-column-width) 2))))
+      (setq left-margin-width margin)
+      (setq right-margin-width margin)
+      (set-window-buffer (selected-window) (current-buffer)))
+    (setq-local mode-line-format nil)
+    (setq-local header-line-format nil)
+    (add-hook 'kill-buffer-hook #'my-zen-mode-exit nil t))
+
+  (defun my-zen-mode-exit ()
+    "Restore settings after exiting custom Zen Mode."
+    (visual-line-mode -1)
+    (visual-fill-column-mode -1)
+    (kill-local-variable 'mode-line-format)
+    (kill-local-variable 'header-line-format))
+
+  (map! :leader
+        :desc "Toggle Zen-mode"
+        "z" #'my-zen-mode-toggle)
+  #+END_SRC
+
+* Company Mode
+  #+BEGIN_SRC elisp
+  (use-package company
+    :ensure t
+    :config
+    (setq company-idle-delay 0.1
+          company-minimum-prefix-length 1))
+  #+END_SRC
+
+* LSP settings for Python
+  #+BEGIN_SRC elisp
+  (use-package! lsp-mode
+    :hook (python-mode . lsp)
+    :commands lsp
+    :config
+    (setq lsp-pylsp-plugins-pylint-enabled nil
+          lsp-pylsp-plugins-flake8-enabled t
+          lsp-pylsp-plugins-pycodestyle-enabled nil
+          lsp-pylsp-plugins-mccabe-enabled nil))
+
+  (after! lsp-python-ms
+    (set-lsp-priority! 'pyright 1))
+  #+END_SRC
+
+* Scrolling Settings
+  #+BEGIN_SRC elisp
+  (setq scroll-margin 10)
+  (setq scroll-step 1)
+  (setq scroll-conservatively 10000)
+  (setq auto-window-vscroll nil)
+  #+END_SRC
+
+* Neotree
+  #+BEGIN_SRC elisp
+  (use-package neotree
+    :ensure t
+    :config
+    (setq neo-smart-open t
+          neo-window-fixed-size nil))
+
+  (map! :leader
+        :desc "Toggle Neotree"
+        "e" #'neotree-toggle)
+  #+END_SRC
+
+* Projectile
+  #+BEGIN_SRC elisp
+  (use-package projectile
+    :ensure t
+    :config
+    (projectile-mode +1)
+    (setq projectile-switch-project-action 'neotree-projectile-action)
+    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+
+  (global-auto-revert-mode 1)
+  #+END_SRC
+
+* Org Bullets
+  #+BEGIN_SRC elisp
+  ;; (use-package org-bullets
+  ;;   :hook (org-mode . org-bullets-mode))
+  #+END_SRC
+
+* Table of Contents
+  #+BEGIN_SRC elisp
+  (use-package toc-org
+    :commands toc-org-enable
+    :init (add-hook 'org-mode-hook 'toc-org-enable))
+  #+END_SRC
+
+* Org Modern Mode
+  #+BEGIN_SRC elisp
+  (setq
+   org-auto-align-tags nil
+   org-tags-column 0
+   org-catch-invisible-edits 'show-and-error
+   org-special-ctrl-a/e t
+   org-insert-heading-respect-content t
+   org-hide-emphasis-markers t
+   org-pretty-entities t
+   org-agenda-tags-column 0
+   org-agenda-block-separator ?─
+   org-agenda-time-grid
+   '((daily today require-timed)
+     (800 1000 1200 1400 1600 1800 2000)
+     " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   org-agenda-current-time-string
+   "◀── now ─────────────────────────────────────────────────")
+
+  (global-org-modern-mode)
+  #+END_SRC
+
+* Fill Column Indicator
+  #+BEGIN_SRC elisp
+  (setq-default fill-column 90)
+  (global-display-fill-column-indicator-mode t)
+  (custom-set-faces
+   '(fill-column-indicator ((t (:foreground "black")))))
+  #+END_SRC
